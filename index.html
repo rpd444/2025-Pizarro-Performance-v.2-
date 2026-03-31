@@ -1,31 +1,49 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attorney Performance Dashboard</title>
+    <title>Attorney Performance Dashboard | Dark Mode</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 1200px; margin: auto; }
-        .card { background: #fff; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        h2 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 12px; text-align: right; border-bottom: 1px solid #eee; }
-        th { background-color: #f8f9fa; font-weight: 600; }
-        tr:last-child { font-weight: bold; background-color: #f1f1f1; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 20px; }
-        .analysis-box { display: flex; justify-content: space-between; gap: 20px; }
-        .stat-card { flex: 1; padding: 15px; border-radius: 6px; background: #e9ecef; text-align: center; }
-        .stat-value { font-size: 24px; font-weight: bold; color: #2980b9; }
-        .stat-label { font-size: 14px; color: #7f8c8d; text-transform: uppercase; margin-bottom: 5px; }
-        canvas { max-width: 100%; }
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-muted: #b0b0b0;
+            --border: #333;
+            --accent: #3498db;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; color: var(--text-main); }
+        .container { max-width: 1400px; margin: auto; }
+        .card { background: var(--card-bg); padding: 20px; margin-bottom: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        h2 { margin-top: 0; color: var(--accent); font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        
+        /* Table Styling */
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th, td { padding: 12px; text-align: right; border-bottom: 1px solid var(--border); }
+        th { color: var(--text-muted); font-weight: 500; }
+        tr:hover { background: #252525; }
+        tr:last-child { font-weight: bold; background-color: #2c2c2c; color: #fff; }
+        
+        /* Grid Layouts */
+        .full-width { grid-column: 1 / -1; }
+        .split-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        
+        .analysis-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 10px; }
+        .stat-card { background: #252525; padding: 20px; border-radius: 8px; text-align: center; border: 1px solid var(--border); }
+        .stat-value { font-size: 1.8rem; font-weight: 700; color: #fff; }
+        .stat-label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px; }
+        
+        canvas { width: 100% !important; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="card">
-            <h2>Monthly Performance Audit</h2>
+            <h2>Annual Performance Audit</h2>
             <table>
                 <thead>
                     <tr>
@@ -40,194 +58,185 @@
                         <th>PACE AVG/DAY</th>
                     </tr>
                 </thead>
-                <tbody id="table-body">
-                    </tbody>
-                <tfoot>
-                    <tr id="table-total">
-                        </tr>
-                </tfoot>
+                <tbody id="table-body"></tbody>
+                <tfoot><tr id="table-total"></tr></tfoot>
             </table>
         </div>
 
         <div class="card">
-            <h2>Analysis: Trajectory vs Baseline</h2>
-            <div class="analysis-box">
+            <h2>Performance Analysis (EOY Actuals)</h2>
+            <div class="analysis-grid">
                 <div class="stat-card">
                     <div class="stat-label">Total Billable Hours</div>
                     <div id="actual-hours" class="stat-value">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Annual Target</div>
-                    <div class="stat-value">1,440</div>
+                    <div class="stat-label">Target Baseline</div>
+                    <div class="stat-value">1,440.0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Variance</div>
+                    <div class="stat-label">Efficiency Variance</div>
                     <div id="variance" class="stat-value">0</div>
                 </div>
-                <div class="stat-card" style="background: #d4edda;">
-                    <div class="stat-label">Status</div>
-                    <div id="status-text" class="stat-value" style="color: #155724;">ON TRACK</div>
+                <div id="status-card" class="stat-card">
+                    <div class="stat-label">Annual Status</div>
+                    <div id="status-text" class="stat-value">--</div>
                 </div>
             </div>
-            <p id="hypothetical-text" style="margin-top: 15px; font-style: italic; color: #555;"></p>
+            <p id="analysis-text" style="color: var(--text-muted); line-height: 1.6;"></p>
         </div>
 
-        <div class="grid">
-            <div class="card">
-                <h2>Target Speedometer (EOY Projection)</h2>
-                <canvas id="speedometerChart"></canvas>
-            </div>
-            <div class="card">
-                <h2>Hours Breakdown by Month</h2>
+        <div class="card">
+            <h2>Hours Breakdown by Month (with Data Labels)</h2>
+            <div style="height: 400px;">
                 <canvas id="hoursBarChart"></canvas>
             </div>
+        </div>
+
+        <div class="split-row">
             <div class="card">
-                <h2>Financial Value by Month</h2>
-                <canvas id="valueBarChart"></canvas>
-            </div>
-            <div class="card">
-                <h2>Pace Trajectory (Billable Avg/Day)</h2>
+                <h2>Pace Trajectory (Target 6.10)</h2>
                 <canvas id="paceLineChart"></canvas>
             </div>
-            <div class="card" style="grid-column: span 2;">
-                <h2>Cumulative Collections</h2>
+            <div class="card">
+                <h2>Cumulative Collections $</h2>
                 <canvas id="collectionsLineChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>EOY Target Realization</h2>
+            <div style="max-width: 400px; margin: auto;">
+                <canvas id="speedometerChart"></canvas>
             </div>
         </div>
     </div>
 
     <script>
-        const data = {
+        const rawData = {
             months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-            trackedHrs: [137.5, 130.6, 142.4, 137.8, 137.9, 142.8, 157.0, 146.7, 145.8, 139.8, 128.2, 119.2],
-            billableHrs: [118.0, 116.4, 128.8, 122.5, 127.9, 129.3, 144.9, 138.2, 135.7, 131.9, 112.9, 115.7],
-            billedHrs: [116.27, 113.58, 125.97, 121.45, 121.91, 120.59, 141.29, 136.56, 133.98, 130.49, 111.72, 115.31],
-            collectedHrs: [115.06, 112.3, 124.44, 120.83, 126.12, 124.6, 142.5, 137.9, 130.5, 127.32, 108.79, 93.63],
-            nonBillHrs: [19.5, 14.2, 13.6, 15.3, 10.0, 13.5, 12.1, 8.5, 10.1, 7.9, 15.3, 3.5],
+            tracked: [137.5, 130.6, 142.4, 137.8, 137.9, 142.8, 157.0, 146.7, 145.8, 139.8, 128.2, 119.2],
+            billable: [118.0, 116.4, 128.8, 122.5, 127.9, 129.3, 144.9, 138.2, 135.7, 131.9, 112.9, 115.7],
+            nonBill: [19.5, 14.2, 13.6, 15.3, 10.0, 13.5, 12.1, 8.5, 10.1, 7.9, 15.3, 3.5],
             billableVal: [53983.5, 53588.5, 59129.5, 57120.0, 60084.0, 60583.0, 67904.0, 64878.5, 63294.0, 61889.5, 52555.0, 54270.5],
             billedVal: [53172.24, 52265.35, 57811.84, 56639.08, 57281.8, 56477.7, 66055.94, 64098.33, 62487.56, 61225.94, 51986.62, 54077.61],
             collectedVal: [52855.58, 51184.82, 57076.84, 55966.45, 56649.73, 55334.27, 65583.22, 64004.25, 60555.3, 59778.02, 50570.3, 43857.93],
             pace: [6.0, 5.92, 6.55, 6.23, 6.51, 6.58, 7.37, 7.03, 6.9, 6.71, 5.74, 5.89]
         };
 
-        const stdDays = 19.66;
-        const totalBillable = data.billableHrs.reduce((a, b) => a + b, 0);
-        const totalTracked = data.trackedHrs.reduce((a, b) => a + b, 0);
-        const totalNonBill = data.nonBillHrs.reduce((a, b) => a + b, 0);
-        const totalBillableVal = data.billableVal.reduce((a, b) => a + b, 0);
-        const totalBilledVal = data.billedVal.reduce((a, b) => a + b, 0);
-        const totalCollectedVal = data.collectedVal.reduce((a, b) => a + b, 0);
-        const avgPace = (totalBillable / (stdDays * 12)).toFixed(2);
+        Chart.register(ChartDataLabels);
+        Chart.defaults.color = '#b0b0b0';
+        Chart.defaults.borderColor = '#333';
 
-        // Render Table
+        // Table Rendering
         const tbody = document.getElementById('table-body');
-        data.months.forEach((m, i) => {
-            const row = `<tr>
+        rawData.months.forEach((m, i) => {
+            tbody.innerHTML += `<tr>
                 <td style="text-align: left;">${m}</td>
                 <td>19.66</td>
-                <td>${data.trackedHrs[i].toLocaleString()}</td>
-                <td>${data.billableHrs[i].toLocaleString()}</td>
-                <td>${data.nonBillHrs[i].toLocaleString()}</td>
-                <td>$${data.billableVal[i].toLocaleString()}</td>
-                <td>$${data.billedVal[i].toLocaleString()}</td>
-                <td>$${data.collectedVal[i].toLocaleString()}</td>
-                <td>${data.pace[i]}</td>
+                <td>${rawData.tracked[i]}</td>
+                <td>${rawData.billable[i]}</td>
+                <td>${rawData.nonBill[i]}</td>
+                <td>$${rawData.billableVal[i].toLocaleString()}</td>
+                <td>$${rawData.billedVal[i].toLocaleString()}</td>
+                <td>$${rawData.collectedVal[i].toLocaleString()}</td>
+                <td>${rawData.pace[i]}</td>
             </tr>`;
-            tbody.innerHTML += row;
         });
 
+        const totalBillable = rawData.billable.reduce((a, b) => a + b, 0);
+        const totalCollected = rawData.collectedVal.reduce((a, b) => a + b, 0);
+        const avgPace = (totalBillable / (19.66 * 12)).toFixed(2);
+        
         document.getElementById('table-total').innerHTML = `
-            <td style="text-align: left;">TOTAL</td>
-            <td>235.92</td>
-            <td>${totalTracked.toLocaleString()}</td>
-            <td>${totalBillable.toLocaleString()}</td>
-            <td>${totalNonBill.toLocaleString()}</td>
-            <td>$${totalBillableVal.toLocaleString()}</td>
-            <td>$${totalBilledVal.toLocaleString()}</td>
-            <td>$${totalCollectedVal.toLocaleString()}</td>
-            <td>${avgPace} (Avg)</td>
-        `;
+            <td style="text-align: left;">TOTAL</td><td>235.92</td>
+            <td>${rawData.tracked.reduce((a,b)=>a+b,0).toFixed(1)}</td>
+            <td>${totalBillable.toFixed(1)}</td>
+            <td>${rawData.nonBill.reduce((a,b)=>a+b,0).toFixed(1)}</td>
+            <td>$${rawData.billableVal.reduce((a,b)=>a+b,0).toLocaleString()}</td>
+            <td>$${rawData.billedVal.reduce((a,b)=>a+b,0).toLocaleString()}</td>
+            <td>$${totalCollected.toLocaleString()}</td>
+            <td>${avgPace} Avg</td>`;
 
-        // Analysis
+        // Analysis Calculations
         document.getElementById('actual-hours').innerText = totalBillable.toFixed(1);
         const variance = totalBillable - 1440;
-        document.getElementById('variance').innerText = (variance > 0 ? "+" : "") + variance.toFixed(1);
-        const statusEl = document.getElementById('status-text');
-        if (variance < 0) {
-            statusEl.innerText = "BEHIND";
-            statusEl.style.color = "#721c24";
-            document.querySelector('.stat-card[style]').style.backgroundColor = "#f8d7da";
+        document.getElementById('variance').innerText = (variance >= 0 ? "+" : "") + variance.toFixed(1);
+        const statusText = document.getElementById('status-text');
+        const statusCard = document.getElementById('status-card');
+        
+        if (variance >= 0) {
+            statusText.innerText = "SURPLUS";
+            statusCard.style.borderTop = "4px solid #2ecc71";
+            document.getElementById('analysis-text').innerHTML = `Attorney exceeded the 1,440-hour baseline by <b>${variance.toFixed(1)} hours</b>. Average daily output of <b>${avgPace}</b> outperformed the 6.10 target. Financial realization is stable with a total collection of <b>$${totalCollected.toLocaleString()}</b>.`;
+        } else {
+            statusText.innerText = "DEFICIT";
+            statusCard.style.borderTop = "4px solid #e74c3c";
+            document.getElementById('analysis-text').innerHTML = `Attorney fell short of the 1,440-hour baseline. To have reached the target, an additional ${Math.abs(variance).toFixed(1)} hours were required.`;
         }
-        document.getElementById('hypothetical-text').innerText = `Based on a full-year performance of ${totalBillable.toFixed(1)} billable hours, you maintained a daily average of ${avgPace} hrs/day against the target of 6.10.`;
 
-        // Charts
+        // 1. Full-Width Hours Bar Chart
+        new Chart(document.getElementById('hoursBarChart'), {
+            type: 'bar',
+            data: {
+                labels: rawData.months,
+                datasets: [
+                    { label: 'Tracked', data: rawData.tracked, backgroundColor: '#34495e' },
+                    { label: 'Billable', data: rawData.billable, backgroundColor: '#3498db' }
+                ]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    datalabels: { color: '#fff', anchor: 'end', align: 'top', offset: 4, font: { size: 10, weight: 'bold' } }
+                },
+                scales: { y: { beginAtZero: true, grid: { color: '#222' } } }
+            }
+        });
+
+        // 2. Pace Line Chart
+        new Chart(document.getElementById('paceLineChart'), {
+            type: 'line',
+            data: {
+                labels: rawData.months,
+                datasets: [
+                    { label: 'Daily Pace', data: rawData.pace, borderColor: '#3498db', tension: 0.3, pointBackgroundColor: '#3498db' },
+                    { label: 'Target (6.10)', data: Array(12).fill(6.1), borderColor: '#e74c3c', borderDash: [5, 5], pointRadius: 0 }
+                ]
+            },
+            options: { plugins: { datalabels: { display: false } } }
+        });
+
+        // 3. Cumulative Collections
+        let sum = 0;
+        const cumulative = rawData.collectedVal.map(v => sum += v);
+        new Chart(document.getElementById('collectionsLineChart'), {
+            type: 'line',
+            data: {
+                labels: rawData.months,
+                datasets: [{ label: 'Cumulative $', data: cumulative, borderColor: '#2ecc71', backgroundColor: 'rgba(46, 204, 113, 0.1)', fill: true }]
+            },
+            options: { plugins: { datalabels: { display: false } } }
+        });
+
+        // 4. Speedometer
         new Chart(document.getElementById('speedometerChart'), {
             type: 'doughnut',
             data: {
-                labels: ['Projected', 'Remaining'],
                 datasets: [{
-                    data: [totalBillable, Math.max(0, 2000 - totalBillable)],
-                    backgroundColor: [totalBillable >= 1440 ? '#2ecc71' : '#f1c40f', '#ecf0f1'],
+                    data: [totalBillable, Math.max(0, 1600 - totalBillable)],
+                    backgroundColor: [totalBillable >= 1440 ? '#2ecc71' : '#e67e22', '#333'],
                     borderWidth: 0
                 }]
             },
             options: {
                 circumference: 180,
                 rotation: -90,
-                cutout: '80%',
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { enabled: false }
-                }
-            }
-        });
-
-        new Chart(document.getElementById('hoursBarChart'), {
-            type: 'bar',
-            data: {
-                labels: data.months,
-                datasets: [
-                    { label: 'Tracked', data: data.trackedHrs, backgroundColor: '#3498db' },
-                    { label: 'Billable', data: data.billableHrs, backgroundColor: '#2ecc71' },
-                    { label: 'Billed', data: data.billedHrs, backgroundColor: '#f1c40f' },
-                    { label: 'Collected', data: data.collectedHrs, backgroundColor: '#9b59b6' }
-                ]
-            }
-        });
-
-        new Chart(document.getElementById('valueBarChart'), {
-            type: 'bar',
-            data: {
-                labels: data.months,
-                datasets: [
-                    { label: 'Billable $', data: data.billableVal, backgroundColor: '#27ae60' },
-                    { label: 'Billed $', data: data.billedVal, backgroundColor: '#f39c12' },
-                    { label: 'Collected $', data: data.collectedVal, backgroundColor: '#8e44ad' }
-                ]
-            }
-        });
-
-        new Chart(document.getElementById('paceLineChart'), {
-            type: 'line',
-            data: {
-                labels: data.months,
-                datasets: [
-                    { label: 'Pace Avg/Day', data: data.pace, borderColor: '#2980b9', tension: 0.1, fill: false },
-                    { label: 'Target (6.10)', data: Array(12).fill(6.1), borderColor: 'red', borderDash: [5, 5], pointRadius: 0, fill: false }
-                ]
-            },
-            options: { scales: { y: { min: 0, max: 10 } } }
-        });
-
-        let cumulative = 0;
-        const cumData = data.collectedVal.map(v => cumulative += v);
-        new Chart(document.getElementById('collectionsLineChart'), {
-            type: 'line',
-            data: {
-                labels: data.months,
-                datasets: [{ label: 'Running Collected Total', data: cumData, borderColor: '#16a085', backgroundColor: 'rgba(22, 160, 133, 0.1)', fill: true }]
+                cutout: '85%',
+                plugins: { datalabels: { display: false } }
             }
         });
     </script>
 </body>
 </html>
+```
